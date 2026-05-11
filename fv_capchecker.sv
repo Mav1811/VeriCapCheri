@@ -141,6 +141,35 @@ function automatic logic [145:0] Captable_write(
   return  w;
 endfunction
 
+function automatic init_forwardWFF();
+    return (mkCapChecker_Top.cap_checker_forwardWFF.empty_reg == 1'b0 &&
+            mkCapChecker_Top.cap_checker_forwardWFF.full_reg  == 1'b1 &&
+            mkCapChecker_Top.cap_checker_forwardWFF.data0_reg == 5'b0 &&
+            mkCapChecker_Top.cap_checker_forwardWFF.data1_reg == 5'b0);
+endfunction
+
+function automatic init_forwardBFF();
+    return (mkCapChecker_Top.cap_checker_forwardBFF.empty_reg == 1'b0 &&
+            mkCapChecker_Top.cap_checker_forwardBFF.full_reg  == 1'b1 &&
+            mkCapChecker_Top.cap_checker_forwardBFF.data0_reg == 1'b0 &&
+            mkCapChecker_Top.cap_checker_forwardBFF.data1_reg == 1'b0);
+endfunction
+
+function automatic init_forwardRFF();
+    return (mkCapChecker_Top.cap_checker_forwardRFF.empty_reg == 1'b0 &&
+            mkCapChecker_Top.cap_checker_forwardRFF.full_reg  == 1'b1 &&
+            mkCapChecker_Top.cap_checker_forwardRFF.data0_reg == 13'b0 &&
+            mkCapChecker_Top.cap_checker_forwardRFF.data1_reg == 13'b0);
+endfunction
+
+//initial function
+
+function automatic init_forward_fifos();
+    return init_forwardWFF() &&
+           init_forwardBFF() &&
+           init_forwardRFF();
+endfunction
+
   
 sequence slave_address_req;
     EN_s_axi_aw_put  ##1 !EN_s_axi_aw_put ;
@@ -178,7 +207,8 @@ property write_pass;
 
     // temporal behaviorwrite_capregs
     //##0  !EN_s_axi_aw_put
-    ##0  mkCapChecker_Top.cap_checker_caps_0 == allmighty_cap  && //!EN_mgmt_axi_w_put && !EN_s_axi_aw_put && !EN_s_axi_w_put  //Captable_write(encoded_cap)
+    init_forward_fifos()
+    ##1 mkCapChecker_Top.cap_checker_caps_0 == allmighty_cap  && //!EN_mgmt_axi_w_put && !EN_s_axi_aw_put && !EN_s_axi_w_put  //Captable_write(encoded_cap)
        EN_s_axi_aw_put && s_axi_aw_put_val == set_s_axi_aw_put_val(cap_value, cap_select) && !EN_s_axi_w_put  
     //##1  !EN_s_axi_aw_put 
     |->   
